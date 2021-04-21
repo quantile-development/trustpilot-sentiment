@@ -86,7 +86,6 @@ def summary(example: PredictedExample):
 #############################################
 
 # FUNCTIONS
-# @st.cache
 
 
 def run_absa(aspect):
