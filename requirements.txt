@@ -6,3 +6,4 @@ numpy
 pandas
 beautifulsoup4
 streamlit_metrics
+aspect_based_sentiment_analysis
