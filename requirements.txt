@@ -1,9 +1,5 @@
-tensorflow
-streamlit
-plotly
-stqdm
 numpy
 pandas
-beautifulsoup4
+plotly
+streamlit
 streamlit_metrics
-aspect_based_sentiment_analysis
