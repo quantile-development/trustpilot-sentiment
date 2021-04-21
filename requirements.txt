@@ -5,3 +5,4 @@ stqdm
 numpy
 pandas
 beautifulsoup4
+streamlit_metrics
