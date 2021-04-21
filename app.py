@@ -2,246 +2,146 @@ import streamlit.components.v1 as components
 import pandas as pd
 import streamlit as st
 import plotly.express as px
-import plotly.graph_objects as go
 from streamlit_metrics import metric_row
 import aspect_based_sentiment_analysis as absa
-from stqdm import stqdm
 import numpy as np
 import plotly.express as px
 
-import html
-from typing import List
-from typing import Tuple
 import numpy as np
-from IPython.core.display import HTML
-from data_types import Pattern, PredictedExample, Review
 from bs4 import BeautifulSoup
-
-
-def html_escape(text):
-    return html.escape(text)
-
-
-def highlight(
-        token: str,
-        weight: float,
-        rgb: Tuple[int, int, int] = (135, 206, 250),
-        max_alpha: float = 0.8,
-        escape: bool = True
-) -> str:
-    r, g, b = rgb
-    color = f'rgba({r},{g},{b},{np.abs(weight) / max_alpha})'
-    def span(c, t): return f'<span style="background-color:{c};">{t}</span>'
-    token = html_escape(token) if escape else token
-    html_token = span(color, token)
-    return html_token
-
-
-def highlight_sequence(
-        tokens: List[str],
-        weights: List[float],
-        **kwargs
-) -> List[str]:
-    return [highlight(token, weight, **kwargs)
-            for token, weight in zip(tokens, weights)]
-
-
-def highlight_pattern(pattern: Pattern, rgb=(180, 180, 180)) -> str:
-    w = pattern.importance
-    html_importance = highlight(f'Importance {w:.2f}', w, rgb=rgb,
-                                max_alpha=0.9)
-    html_patterns = highlight_sequence(pattern.tokens, pattern.weights)
-    highlighted_text = [html_importance, *html_patterns]
-    highlighted_text = ' '.join(highlighted_text)
-    return highlighted_text
-
-
-def display_html(patterns: List[Pattern]):
-    texts = []
-    texts.extend([highlight_pattern(pattern) + '<br>' for pattern in patterns])
-    text = ' '.join(texts)
-    html_text = HTML(text)
-    return text
-
-
-def display_patterns(patterns: List[Pattern]):
-    html_text = display_html(patterns)
-    return html_text
-
-
-def display(review: Review):
-    return display_patterns(review.patterns)
-
-
-def summary(example: PredictedExample):
-    print(f'{str(example.sentiment)} for "{example.aspect}"')
-    rounded_scores = np.round(example.scores, decimals=3)
-    print(f'Scores (neutral/negative/positive): {rounded_scores}')
-
-#############################################
-#############################################
-#############################################
-#############################################
-#############################################
-#############################################
-
-# FUNCTIONS
-
-
-def run_absa(aspect):
-
-    sentences = []
-
-    for sentence in stqdm(df['sentences']):
-
-        run = nlp(text=sentence, aspects=[aspect])
-        sentences.append(run.examples[0])
-
-    return sentences
-
-
-@st.cache
-def retrieve_scores(absa_analysis):
-
-    avg_distribution = np.sum(np.array(
-        [example.scores for example in absa_analysis]), axis=0) / len(absa_analysis)
-
-    neutral, negative, positive = avg_distribution
-
-    return neutral, negative, positive
 
 
 # LAYOUT / LOGIC
 st.title('Analysing Trustpilot Reviews')
 
 # Load the data
-combined = pd.read_csv('combined_reviews_eng_CLEAN.csv')
+# data = pd.read_csv('testing2.csv').drop('Unnamed: 0', axis=1)
+data = pd.read_csv('review-data.csv').drop('Unnamed: 0', axis=1)
 
 # List of companies
-companies = combined['company'].unique()
+companies = data['company'].unique()
 
-s1 = st.selectbox(
+
+selected_company = st.selectbox(
     label='Select company',
     options=companies,
     key='selection-1')
 
+# Aspects
+# aspects = list(data[data['company'] == selected_company].groupby(
+#     'aspect').sum().sort_values('nb_reviews').index)[::-1]
 
-aspect = st.text_input(
-    'Select an aspect you want to investigate')
+# aspects = list(data[(data['company'] == selected_company) & (
+#     data['nb_reviews'] > 0)].sort_values('nb_reviews')['aspect'][::-1])
 
-df = combined[(combined['company'] == s1) & (
-    combined['sentences'].str.contains(aspect))]
+st.markdown("""
+<style>
+.custom-label {
+    font-size: 0.8rem;
+    color: rgb(38, 39, 48);
+    margin-bottom: 0.4rem;
+}
+</style>
+""", unsafe_allow_html=True)
 
-# submit = st.button('Run model')
-submitted = False
+st.markdown('<p class="custom-label">Select an aspect you want to investigate</p>',
+            unsafe_allow_html=True)
 
-if aspect:
-    # # Reset submit button
-    # submit = False
 
-    if not s1:
-        st.warning('Please select a company')
+aspects = ['service', 'customer service', 'experience',
+           'product', 'price', 'quality',
+           'order', 'refund', 'return',
+           'delivery']
 
-    elif not aspect:
-        st.warning('Please select an aspect you want to analyze')
+col1 = st.beta_columns(3)
+col2 = st.beta_columns(3)
+col3 = st.beta_columns(3)
+col4 = st.beta_columns(3)
 
-    elif len(df) == 0:
-        st.warning(
-            f'This aspect does not occur in the available reviews.')
+buttons = []
 
+for idx, aspect in enumerate(aspects):
+    count = data[(data['company'] == selected_company) & (
+        data['aspect'] == aspect)].reset_index(drop=True)['nb_reviews'][0]
+
+    if idx < 3:
+        buttons.append(col1[idx].button(f'{aspect} ({count})', key=idx))
+    elif idx < 6:
+        buttons.append(col2[idx % 3].button(f'{aspect} ({count})', key=idx))
+    elif idx < 9:
+        buttons.append(col3[idx % 3].button(f'{aspect} ({count})', key=idx))
     else:
-        submitted = True
+        buttons.append(col4[idx % 3].button(f'{aspect} ({count})', key=idx))
 
-        # Aspect based sentiment analysis
-        recognizer = absa.aux_models.BasicPatternRecognizer()
-        nlp = absa.load(pattern_recognizer=recognizer)
+# Select button pressed last
+selected_aspect = None
 
-        # Run abstract based sentiment analysis
-        absa_analysis = run_absa(aspect)
+for idx, button in enumerate(buttons):
+    if button:
+        selected_aspect = aspects[idx]
+        break
 
-if submitted:
-    neutral, negative, positive = retrieve_scores(absa_analysis)
 
-    st.header(f'Sentiment Distribution')
-    st.write(f'#### For reviews containing the word: "{aspect}"')
-    metric_row(
-        {
-            "# Reviews": len(df),
-            "Negative": np.round(negative, 3),
-            "Neutral": np.round(neutral, 3),
-            "Positive": np.round(positive, 3),
-        }
-    )
+# Filter dataframe
+df = data[(data['company'] == selected_company)
+          & (data['aspect'] == selected_aspect)].reset_index(drop=True)
 
-    sentiment_scores = [review.scores[2] - review.scores[1]
-                        for review in absa_analysis]
 
-    fig = px.histogram(sentiment_scores, nbins=25)
+if selected_aspect:
+    # If aspect is not present for company
+    if df['nb_reviews'][0] == 0:
+        st.warning(
+            f'Note: "{selected_aspect}" is not mentioned in any of the available reviews for {selected_company}.')
+    else:
+        negative = df['negative'][0]
+        neutral = df['neutral'][0]
+        positive = df['positive'][0]
 
-    config = {'displayModeBar': False}
+        st.header(f'Sentiment Distribution')
+        st.write(f'#### For reviews containing the word: "{selected_aspect}"')
+        metric_row(
+            {
+                "# Reviews": df['nb_reviews'][0],
+                "Negative": np.round(negative, 3),
+                "Neutral": np.round(neutral, 3),
+                "Positive": np.round(positive, 3),
+            }
+        )
 
-    fig.update_layout(
-        xaxis_title_text='Sentiment',
-        yaxis_title_text='Count',
-        bargap=0.2,
-        showlegend=False,
-        dragmode=False,
-        clickmode='none',
-    )
+        sentiment_scores = [float(i)
+                            for i in df['sentiment_scores'][0][1:-1].split(',')]
 
-    fig.update_traces(hovertemplate='<i><b>Count</i>: %{y}' +
-                      '<br><b>Sentiment Range</b>: %{x}' +
-                      '<br><extra></extra>')
+        fig = px.histogram(sentiment_scores, nbins=25)
 
-    st.plotly_chart(fig, use_container_width=False, config=config)
+        config = {'displayModeBar': False}
 
-    best_5 = np.array([sentence.scores[2]
-                       for sentence in absa_analysis]).argsort()[-5:][::-1]
+        fig.update_layout(
+            xaxis_title_text='Sentiment score',
+            yaxis_title_text='Count',
+            bargap=0.2,
+            showlegend=False,
+            dragmode=False,
+            clickmode='none',
+        )
 
-    worst_5 = np.array([sentence.scores[1]
-                        for sentence in absa_analysis]).argsort()[-5:][::-1]
+        fig.update_traces(hovertemplate='<i><b>Count</i>: %{y}' +
+                          '<br><b>Sentiment Range</b>: %{x}' +
+                          '<br><extra></extra>')
 
-    st.header(f'Example Reviews')
-    st.write(f'#### Negative example sentences')
+        st.plotly_chart(fig, use_container_width=False, config=config)
 
-    str_to_remove = '<span style="background-color:rgba(180,180,180,1.1111111111111112);">Importance 1.00</span>'
+        st.header(f'Example Reviews')
 
-    for worst in worst_5:
+        st.write(f'#### Negative example sentences')
+        neg_columns = df.filter(regex='neg_example').dropna(axis=1).columns
 
-        w_scores = absa_analysis[worst].scores
+        for idx in range(0, len(neg_columns), 2):
+            components.html(df[neg_columns[idx]][0],
+                            height=df[neg_columns[idx+1]][0])
 
-        if w_scores[1] > 0.5:
+        st.write(f'#### Positive example sentences')
+        pos_columns = df.filter(regex='pos_example').dropna(axis=1).columns
 
-            worst_html = display(absa_analysis[worst].review).replace(
-                str_to_remove, '').replace('135,206,250', '242, 136, 136')
-
-            soup = BeautifulSoup(worst_html.split('<br>')[0])
-
-            length = len(
-                ' '.join([tag.string for tag in soup.find_all('span')]))
-
-            components.html(worst_html.split('<br>')[
-                            0], height=25+length//100 * 25)
-
-        else:
-            break
-
-    st.write(f'#### Positive example sentences')
-
-    for best in best_5:
-
-        b_scores = absa_analysis[best].scores
-
-        if b_scores[2] > 0.5:
-            best_html = display(absa_analysis[best].review).replace(
-                str_to_remove, '').replace('135,206,250', '137, 242, 114')
-
-            soup = BeautifulSoup(best_html.split('<br>')[0])
-
-            length = len(
-                ' '.join([tag.string for tag in soup.find_all('span')]))
-
-            components.html(best_html.split('<br>')[
-                            0], height=25+length//100 * 25)
-        else:
-            break
+        for idx in range(0, len(pos_columns), 2):
+            components.html(df[pos_columns[idx]][0],
+                            height=df[pos_columns[idx+1]][0])
