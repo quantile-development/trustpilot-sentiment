@@ -5,28 +5,19 @@ import streamlit as st
 import streamlit.components.v1 as components
 from streamlit_metrics import metric_row
 
-# LAYOUT / LOGIC
+# Title
 st.title('Analysing Trustpilot Reviews')
 
 # Load the data
-# data = pd.read_csv('testing2.csv').drop('Unnamed: 0', axis=1)
 data = pd.read_csv('review-data.csv').drop('Unnamed: 0', axis=1)
 
 # List of companies
 companies = data['company'].unique()
 
-
 selected_company = st.selectbox(
     label='Select company',
     options=companies,
     key='selection-1')
-
-# Aspects
-# aspects = list(data[data['company'] == selected_company].groupby(
-#     'aspect').sum().sort_values('nb_reviews').index)[::-1]
-
-# aspects = list(data[(data['company'] == selected_company) & (
-#     data['nb_reviews'] > 0)].sort_values('nb_reviews')['aspect'][::-1])
 
 st.markdown("""
 <style>
