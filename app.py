@@ -1,15 +1,9 @@
-import streamlit.components.v1 as components
+import numpy as np
 import pandas as pd
+import plotly.express as px
 import streamlit as st
-import plotly.express as px
+import streamlit.components.v1 as components
 from streamlit_metrics import metric_row
-import aspect_based_sentiment_analysis as absa
-import numpy as np
-import plotly.express as px
-
-import numpy as np
-from bs4 import BeautifulSoup
-
 
 # LAYOUT / LOGIC
 st.title('Analysing Trustpilot Reviews')
