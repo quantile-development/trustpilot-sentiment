@@ -1,0 +1,7 @@
+tensorflow
+streamlit
+plotly
+stqdm
+numpy
+pandas
+beautifulsoup4

@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-from streamlit_metrics import metric, metric_row
+from streamlit_metrics import metric_row
 import aspect_based_sentiment_analysis as absa
 from stqdm import stqdm
 import numpy as np
@@ -13,7 +13,6 @@ import html
 from typing import List
 from typing import Tuple
 import numpy as np
-from IPython.core.display import display as ipython_display
 from IPython.core.display import HTML
 from data_types import Pattern, PredictedExample, Review
 from bs4 import BeautifulSoup
