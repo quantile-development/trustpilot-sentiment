@@ -132,23 +132,24 @@ if selected_aspect:
         st.warning(
             f'Note: "{selected_aspect}" is not mentioned in any of the available reviews for {selected_company}.')
     else:
-        # negative = df['negative'][0]
-        # neutral = df['neutral'][0]
-        # positive = df['positive'][0]
 
         sentiment_scores = [float(i)
                             for i in df['sentiment_scores'][0][1:-1].split(',')]
 
         scores = reviews_categorical_df(sentiment_scores)
 
+        negative = scores[scores['sentiment'] == 'negative']['count'].values[0]
+        neutral = scores[scores['sentiment'] == 'neutral']['count'].values[0]
+        positive = scores[scores['sentiment'] == 'positive']['count'].values[0]
+
         st.header(f'Sentiment Distribution')
         st.write(f'#### For reviews containing the word: "{selected_aspect}"')
         metric_row(
             {
                 "# Reviews": df['nb_reviews'][0],
-                "Negative": np.round(scores[scores['sentiment'] == 'negative']['count'].values[0], 3),
-                "Neutral": np.round(scores[scores['sentiment'] == 'neutral']['count'].values[0], 3),
-                "Positive": np.round(scores[scores['sentiment'] == 'positive']['count'].values[0], 3),
+                "Negative": np.round(negative, 3),
+                "Neutral": np.round(neutral, 3),
+                "Positive": np.round(positive, 3),
             }
         )
 
@@ -172,18 +173,18 @@ if selected_aspect:
 
         st.plotly_chart(fig, use_container_width=False, config=config)
 
-        st.header(f'Example Reviews')
+        st.header(f'Example reviews')
 
-        st.write(f'#### Negative example sentences')
         neg_columns = df.filter(regex='neg_example').dropna(axis=1).columns
+        with st.beta_expander(f'Negative reviews ({int(len(neg_columns)/2)})'):
 
-        for idx in range(0, len(neg_columns), 2):
-            components.html(df[neg_columns[idx]][0],
-                            height=df[neg_columns[idx+1]][0])
+            for idx in range(0, len(neg_columns), 2):
+                components.html(df[neg_columns[idx]][0],
+                                height=df[neg_columns[idx+1]][0])
 
-        st.write(f'#### Positive example sentences')
         pos_columns = df.filter(regex='pos_example').dropna(axis=1).columns
+        with st.beta_expander(f'Positive reviews ({int(len(pos_columns)/2)})'):
 
-        for idx in range(0, len(pos_columns), 2):
-            components.html(df[pos_columns[idx]][0],
-                            height=df[pos_columns[idx+1]][0])
+            for idx in range(0, len(pos_columns), 2):
+                components.html(df[pos_columns[idx]][0],
+                                height=df[pos_columns[idx+1]][0])
