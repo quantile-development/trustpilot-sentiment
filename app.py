@@ -57,7 +57,7 @@ st.title('Analysing Trustpilot Reviews')
 
 @st.cache(allow_output_mutation=True)
 def read_dataframe():
-    return pd.read_csv('full-review-data.csv').drop('Unnamed: 0', axis=1)
+    return pd.read_pickle('reviews-data.pkl')
 
 
 data = read_dataframe()
