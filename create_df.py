@@ -85,14 +85,16 @@ def summary(example: PredictedExample):
 def run_absa(subset, aspect):
 
     print('Running absa...')
-    sentences = []
+    reviews = []
 
-    for sentence in tqdm(subset['sentences']):
+    for review in tqdm(subset['content']):
+        if len(review) > 2078:
+            continue
 
-        run = nlp(text=sentence, aspects=[aspect])
-        sentences.append(run.examples[0])
+        run = nlp(text=review, aspects=[aspect])
+        reviews.append(run.examples[0])
 
-    return sentences
+    return reviews
 
 
 def retrieve_scores(absa_analysis):
@@ -104,8 +106,10 @@ def retrieve_scores(absa_analysis):
     return neutral, negative, positive
 
 
-df = pd.read_csv('combined_reviews_eng_CLEAN.csv')
-df = df.drop(['Unnamed: 0', 'Unnamed: 0.1'], axis=1)
+# df = pd.read_csv('combined_reviews_eng_CLEAN.csv')
+df = pd.read_csv('combined_reviews_eng.csv')
+# df = df.drop(['Unnamed: 0', 'Unnamed: 0.1'], axis=1)
+df = df.drop(['Unnamed: 0'], axis=1)
 
 companies = df['company'].unique()
 aspects = ['price', 'delivery', 'quality', 'return', 'refund',
@@ -126,7 +130,7 @@ def absa_iteration(company, aspect):
 
     # Subset
     subset = df[(df['company'] == company) & (
-        df['sentences'].str.contains(aspect))]
+        df['content'].str.contains(aspect))]
 
     # Metrics
     some_dict['nb_reviews'] = len(subset)
@@ -159,7 +163,7 @@ def absa_iteration(company, aspect):
         # Negative Examples
 
         idx_neg_5 = np.array([sent.scores[1]
-                              for sent in absa_analysis]).argsort()[-5:][::-1]
+                              for sent in absa_analysis]).argsort()[-10:][::-1]
 
         for idx, idx_neg in enumerate(idx_neg_5):
 
@@ -188,7 +192,7 @@ def absa_iteration(company, aspect):
 
         # Positive Examples
         idx_pos_5 = np.array([sent.scores[2]
-                              for sent in absa_analysis]).argsort()[-5:][::-1]
+                              for sent in absa_analysis]).argsort()[-10:][::-1]
 
         for idx, idx_pos in enumerate(idx_pos_5):
 
@@ -229,4 +233,4 @@ print('Finished!')
 new_df = pd.DataFrame(records)
 
 # new_df.to_csv('TeStINg.csv')
-new_df.to_csv('review-data.csv')
+new_df.to_csv('full-review-data.csv')
