@@ -106,9 +106,7 @@ def retrieve_scores(absa_analysis):
     return neutral, negative, positive
 
 
-# df = pd.read_csv('combined_reviews_eng_CLEAN.csv')
 df = pd.read_csv('combined_reviews_eng.csv')
-# df = df.drop(['Unnamed: 0', 'Unnamed: 0.1'], axis=1)
 df = df.drop(['Unnamed: 0'], axis=1)
 
 companies = df['company'].unique()
@@ -232,5 +230,4 @@ print('Finished!')
 
 new_df = pd.DataFrame(records)
 
-# new_df.to_csv('TeStINg.csv')
 new_df.to_csv('full-review-data.csv')

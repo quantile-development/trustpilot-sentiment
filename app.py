@@ -54,9 +54,6 @@ def reviews_categorical_plot(df):
 # Title
 st.title('Analysing Trustpilot Reviews')
 
-# Load the data
-# data = pd.read_csv('review-data.csv').drop('Unnamed: 0', axis=1)
-
 
 @st.cache(allow_output_mutation=True)
 def read_dataframe():
@@ -154,22 +151,8 @@ if selected_aspect:
         )
 
         fig = reviews_categorical_plot(scores)
-        # fig = px.histogram(sentiment_scores, nbins=25)
 
         config = {'displayModeBar': False}
-
-        # fig.update_layout(
-        #     xaxis_title_text='Sentiment score',
-        #     yaxis_title_text='Count',
-        #     bargap=0.2,
-        #     showlegend=False,
-        #     dragmode=False,
-        #     clickmode='none',
-        # )
-
-        # fig.update_traces(hovertemplate='<i><b>Count</i>: %{y}' +
-        #                   '<br><b>Sentiment Range</b>: %{x}' +
-        #                   '<br><extra></extra>')
 
         st.plotly_chart(fig, use_container_width=False, config=config)
 
