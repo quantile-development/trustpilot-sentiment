@@ -5,11 +5,65 @@ import streamlit as st
 import streamlit.components.v1 as components
 from streamlit_metrics import metric_row
 
+st.set_page_config(page_title='Quantile | Analysing Trustpilot Reviews',
+                   page_icon='https://quantile.nl/favicon/favicon.ico')
+
+# Hide the hamburger menu
+hide_streamlit_style = """
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+</style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+
+# HELPER FUNCTIONS
+@st.cache
+def reviews_categorical_df(sentiment_scores):
+
+    scores = []
+
+    for score in sentiment_scores:
+        if score < -0.3:
+            scores.append('negative')
+        elif score > 0.3:
+            scores.append('positive')
+        else:
+            scores.append('neutral')
+
+    df = pd.DataFrame([{"count": scores.count('negative'), 'sentiment': 'negative'},
+                       {"count": scores.count(
+                           'neutral'), 'sentiment': 'neutral'},
+                       {"count": scores.count('positive'), 'sentiment': 'positive'}])
+
+    return df
+
+
+@st.cache
+def reviews_categorical_plot(df):
+
+    fig = px.bar(df, x='sentiment', y='count', color='sentiment',
+                 color_discrete_map={'negative': 'rgba(242, 136, 136,1.25)',
+                                     'positive': 'rgba(137, 242, 114,1.25)',
+                                     'neutral': 'rgb(131, 133, 132)'})
+
+    return fig
+
+
 # Title
 st.title('Analysing Trustpilot Reviews')
 
 # Load the data
-data = pd.read_csv('review-data.csv').drop('Unnamed: 0', axis=1)
+# data = pd.read_csv('review-data.csv').drop('Unnamed: 0', axis=1)
+
+
+@st.cache(allow_output_mutation=True)
+def read_dataframe():
+    return pd.read_csv('full-review-data.csv').drop('Unnamed: 0', axis=1)
+
+
+data = read_dataframe()
 
 # List of companies
 companies = data['company'].unique()
@@ -78,40 +132,43 @@ if selected_aspect:
         st.warning(
             f'Note: "{selected_aspect}" is not mentioned in any of the available reviews for {selected_company}.')
     else:
-        negative = df['negative'][0]
-        neutral = df['neutral'][0]
-        positive = df['positive'][0]
+        # negative = df['negative'][0]
+        # neutral = df['neutral'][0]
+        # positive = df['positive'][0]
+
+        sentiment_scores = [float(i)
+                            for i in df['sentiment_scores'][0][1:-1].split(',')]
+
+        scores = reviews_categorical_df(sentiment_scores)
 
         st.header(f'Sentiment Distribution')
         st.write(f'#### For reviews containing the word: "{selected_aspect}"')
         metric_row(
             {
                 "# Reviews": df['nb_reviews'][0],
-                "Negative": np.round(negative, 3),
-                "Neutral": np.round(neutral, 3),
-                "Positive": np.round(positive, 3),
+                "Negative": np.round(scores[scores['sentiment'] == 'negative']['count'].values[0], 3),
+                "Neutral": np.round(scores[scores['sentiment'] == 'neutral']['count'].values[0], 3),
+                "Positive": np.round(scores[scores['sentiment'] == 'positive']['count'].values[0], 3),
             }
         )
 
-        sentiment_scores = [float(i)
-                            for i in df['sentiment_scores'][0][1:-1].split(',')]
-
-        fig = px.histogram(sentiment_scores, nbins=25)
+        fig = reviews_categorical_plot(scores)
+        # fig = px.histogram(sentiment_scores, nbins=25)
 
         config = {'displayModeBar': False}
 
-        fig.update_layout(
-            xaxis_title_text='Sentiment score',
-            yaxis_title_text='Count',
-            bargap=0.2,
-            showlegend=False,
-            dragmode=False,
-            clickmode='none',
-        )
+        # fig.update_layout(
+        #     xaxis_title_text='Sentiment score',
+        #     yaxis_title_text='Count',
+        #     bargap=0.2,
+        #     showlegend=False,
+        #     dragmode=False,
+        #     clickmode='none',
+        # )
 
-        fig.update_traces(hovertemplate='<i><b>Count</i>: %{y}' +
-                          '<br><b>Sentiment Range</b>: %{x}' +
-                          '<br><extra></extra>')
+        # fig.update_traces(hovertemplate='<i><b>Count</i>: %{y}' +
+        #                   '<br><b>Sentiment Range</b>: %{x}' +
+        #                   '<br><extra></extra>')
 
         st.plotly_chart(fig, use_container_width=False, config=config)
 
