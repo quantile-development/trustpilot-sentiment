@@ -1,6 +1,9 @@
-
+import numpy as np
+import pandas as pd
+import plotly.express as px
 import streamlit as st
-
+import streamlit.components.v1 as components
+from streamlit_metrics import metric_row
 
 st.set_page_config(page_title='Quantile | Analysing Trustpilot Reviews',
                    page_icon='https://quantile.nl/favicon/favicon.ico')
@@ -13,6 +16,39 @@ footer {visibility: hidden;}
 </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+
+# HELPER FUNCTIONS
+# @st.cache
+def reviews_categorical_df(sentiment_scores):
+
+    scores = []
+
+    for score in sentiment_scores:
+        if score < -0.3:
+            scores.append('negative')
+        elif score > 0.3:
+            scores.append('positive')
+        else:
+            scores.append('neutral')
+
+    df = pd.DataFrame([{"count": scores.count('negative'), 'sentiment': 'negative'},
+                       {"count": scores.count(
+                           'neutral'), 'sentiment': 'neutral'},
+                       {"count": scores.count('positive'), 'sentiment': 'positive'}])
+
+    return df
+
+
+# @st.cache
+def reviews_categorical_plot(df):
+
+    fig = px.bar(df, x='sentiment', y='count', color='sentiment',
+                 color_discrete_map={'negative': 'rgba(242, 136, 136,1.25)',
+                                     'positive': 'rgba(137, 242, 114,1.25)',
+                                     'neutral': 'rgb(131, 133, 132)'})
+
+    return fig
 
 
 # Title
