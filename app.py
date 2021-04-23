@@ -19,7 +19,7 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 
 # HELPER FUNCTIONS
-@st.cache
+# @st.cache
 def reviews_categorical_df(sentiment_scores):
 
     scores = []
@@ -40,7 +40,7 @@ def reviews_categorical_df(sentiment_scores):
     return df
 
 
-@st.cache
+# @st.cache
 def reviews_categorical_plot(df):
 
     fig = px.bar(df, x='sentiment', y='count', color='sentiment',
