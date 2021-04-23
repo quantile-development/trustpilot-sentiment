@@ -54,11 +54,6 @@ def reviews_categorical_plot(df):
 # Title
 st.title('Analysing Trustpilot Reviews')
 
-st.markdown("""
-### Created by [Quantile](https://quantile.nl)
-###
-""")
-
 
 review_counts = {'booking.com': {'price': 14,
                                  'delivery': 0,
@@ -146,61 +141,75 @@ review_counts = {'booking.com': {'price': 14,
 companies = ['booking.com', 'cheaptickets.nl', 'bol.com', 'coolblue.nl', 'wehkamp.nl',
              'zalando.nl', 'mediamarkt.nl', 'debijenkorf.nl']
 
+
 selected_company = st.selectbox(
     label='Select company',
     options=companies,
     key='selection-1')
 
-st.markdown("""
-<style>
-.custom-label {
-    font-size: 0.8rem;
-    color: rgb(38, 39, 48);
-    margin-bottom: 0.4rem;
-}
-</style>
-""", unsafe_allow_html=True)
+# st.markdown("""
+# <style>
+# .custom-label {
+#     font-size: 0.8rem;
+#     color: rgb(38, 39, 48);
+#     margin-bottom: 0.4rem;
+# }
+# </style>
+# """, unsafe_allow_html=True)
 
-st.markdown('<p class="custom-label">Select an aspect you want to investigate</p>',
-            unsafe_allow_html=True)
+# st.markdown('<p class="custom-label">Select an aspect you want to investigate</p>',
+#             unsafe_allow_html=True)
 
 
-aspects = ['service', 'customer service', 'experience',
-           'product', 'price', 'quality',
-           'order', 'refund', 'return',
-           'delivery']
+aspects = [aspect for aspect,
+           count in sorted(review_counts[selected_company].items(),
+                           key=lambda x: x[1], reverse=True) if count > 0]
 
-col1 = st.beta_columns(3)
-col2 = st.beta_columns(3)
-col3 = st.beta_columns(3)
-col4 = st.beta_columns(3)
 
-buttons = []
+# aspects = ['service', 'customer service', 'experience',
+#            'product', 'price', 'quality',
+#            'order', 'refund', 'return',
+#            'delivery']
 
-for idx, aspect in enumerate(aspects):
-    if idx < 3:
-        buttons.append(col1[idx].button(
-            f'{aspect} ({review_counts[selected_company][aspect]})', key=idx))
-    elif idx < 6:
-        buttons.append(col2[idx % 3].button(
-            f'{aspect} ({review_counts[selected_company][aspect]})', key=idx))
-    elif idx < 9:
-        buttons.append(col3[idx % 3].button(
-            f'{aspect} ({review_counts[selected_company][aspect]})', key=idx))
-    else:
-        buttons.append(col4[idx % 3].button(
-            f'{aspect} ({review_counts[selected_company][aspect]})', key=idx))
+
+selected_aspect = st.selectbox(
+    label='Select an aspect you want to investigate',
+    options=aspects,
+    key='selection-1')
+
+# col1 = st.beta_columns(3)
+# col2 = st.beta_columns(3)
+# col3 = st.beta_columns(3)
+# col4 = st.beta_columns(3)
+
+# buttons = []
+
+# for idx, aspect in enumerate(aspects):
+#     if idx < 3:
+#         buttons.append(col1[idx].button(
+#             f'{aspect} ({review_counts[selected_company][aspect]})', key=idx))
+#     else:
+#         break
+# elif idx < 6:
+#     buttons.append(col2[idx % 3].button(
+#         f'{aspect} ({review_counts[selected_company][aspect]})', key=idx))
+# elif idx < 9:
+#     buttons.append(col3[idx % 3].button(
+#         f'{aspect} ({review_counts[selected_company][aspect]})', key=idx))
+# else:
+#     buttons.append(col4[idx % 3].button(
+#         f'{aspect} ({review_counts[selected_company][aspect]})', key=idx))
 
 # Select button pressed last
-selected_aspect = None
+# selected_aspect = None
 
-for idx, button in enumerate(buttons):
-    if button:
-        selected_aspect = aspects[idx]
-        break
+# for idx, button in enumerate(buttons):
+#     if button:
+#         selected_aspect = aspects[idx]
+#         break
 
 
-# @st.cache(allow_output_mutation=True, max_entries=10, ttl=600)
+@st.cache(allow_output_mutation=True, max_entries=10, ttl=600)
 def read_data(selected_company, selected_aspect):
     return pd.read_pickle('reviews-data.pkl').loc[selected_company, selected_aspect]
 
@@ -256,3 +265,9 @@ if selected_aspect:
             for idx in range(0, len(pos_columns), 2):
                 components.html(data[pos_columns[idx]],
                                 height=data[pos_columns[idx+1]])
+
+st.markdown("""
+## 
+### Created by [Quantile](https://quantile.nl)
+###
+""")
