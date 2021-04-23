@@ -55,7 +55,7 @@ def reviews_categorical_plot(df):
 st.title('Analysing Trustpilot Reviews')
 
 
-@st.cache(allow_output_mutation=True)
+@st.cache(allow_output_mutation=True, max_entries=10, ttl=600)
 def read_dataframe():
     return pd.read_pickle('reviews-data.pkl')
 
