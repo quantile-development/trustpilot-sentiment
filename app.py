@@ -209,7 +209,7 @@ selected_aspect = st.selectbox(
 #         break
 
 
-@st.cache(allow_output_mutation=True, max_entries=10, ttl=600)
+# @st.cache(allow_output_mutation=True, max_entries=10, ttl=5)
 def read_data(selected_company, selected_aspect):
     return pd.read_pickle('reviews-data.pkl').loc[selected_company, selected_aspect]
 
