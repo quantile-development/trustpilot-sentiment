@@ -207,66 +207,66 @@ for idx, button in enumerate(buttons):
         break
 
 
-@st.cache(allow_output_mutation=True, max_entries=10, ttl=15)
-def read_data(selected_company, selected_aspect):
-    print('reading data')
-    return pd.read_pickle('reviews-data.pkl').loc[selected_company, selected_aspect]
+# @st.cache(allow_output_mutation=True, max_entries=10, ttl=15)
+# def read_data(selected_company, selected_aspect):
+#     print('reading data')
+#     return pd.read_pickle('reviews-data.pkl').loc[selected_company, selected_aspect]
 
 
-if selected_aspect:
-    # Filter dataframe
-    data = read_data(selected_company, selected_aspect)
+# if selected_aspect:
+#     # Filter dataframe
+#     data = read_data(selected_company, selected_aspect)
 
-    # If aspect is not present for company
-    if data['nb_reviews'] == 0:
-        st.warning(
-            f'Note: "{selected_aspect}" is not mentioned in any of the available reviews for {selected_company}.')
-    else:
+#     # If aspect is not present for company
+#     if data['nb_reviews'] == 0:
+#         st.warning(
+#             f'Note: "{selected_aspect}" is not mentioned in any of the available reviews for {selected_company}.')
+#     else:
 
-        sentiment_scores = [float(i)
-                            for i in data['sentiment_scores'][1:-1].split(',')]
+#         sentiment_scores = [float(i)
+#                             for i in data['sentiment_scores'][1:-1].split(',')]
 
-        scores = reviews_categorical_df(sentiment_scores)
+#         scores = reviews_categorical_df(sentiment_scores)
 
-        negative = scores[scores['sentiment'] == 'negative']['count'].values[0]
-        neutral = scores[scores['sentiment'] == 'neutral']['count'].values[0]
-        positive = scores[scores['sentiment'] == 'positive']['count'].values[0]
+#         negative = scores[scores['sentiment'] == 'negative']['count'].values[0]
+#         neutral = scores[scores['sentiment'] == 'neutral']['count'].values[0]
+#         positive = scores[scores['sentiment'] == 'positive']['count'].values[0]
 
-        st.header(f'Sentiment Distribution')
-        st.write(f'#### For reviews containing the word: "{selected_aspect}"')
-        metric_row(
-            {
-                "# Reviews": data['nb_reviews'],
-                "Negative": np.round(negative, 3),
-                "Neutral": np.round(neutral, 3),
-                "Positive": np.round(positive, 3),
-            }
-        )
+#         st.header(f'Sentiment Distribution')
+#         st.write(f'#### For reviews containing the word: "{selected_aspect}"')
+#         metric_row(
+#             {
+#                 "# Reviews": data['nb_reviews'],
+#                 "Negative": np.round(negative, 3),
+#                 "Neutral": np.round(neutral, 3),
+#                 "Positive": np.round(positive, 3),
+#             }
+#         )
 
-        fig = reviews_categorical_plot(scores)
+#         fig = reviews_categorical_plot(scores)
 
-        config = {'displayModeBar': False}
+#         config = {'displayModeBar': False}
 
-        st.plotly_chart(fig, use_container_width=False, config=config)
+#         st.plotly_chart(fig, use_container_width=False, config=config)
 
-        st.header(f'Inspect example reviews')
+#         st.header(f'Inspect example reviews')
 
-        neg_columns = data.filter(regex='neg_example').dropna().index
-        with st.beta_expander(f'Negative reviews ({int(len(neg_columns)/2)})'):
+#         neg_columns = data.filter(regex='neg_example').dropna().index
+#         with st.beta_expander(f'Negative reviews ({int(len(neg_columns)/2)})'):
 
-            for idx in range(0, len(neg_columns), 2):
-                components.html(data[neg_columns[idx]],
-                                height=data[neg_columns[idx+1]])
+#             for idx in range(0, len(neg_columns), 2):
+#                 components.html(data[neg_columns[idx]],
+#                                 height=data[neg_columns[idx+1]])
 
-        pos_columns = data.filter(regex='pos_example').dropna().index
-        with st.beta_expander(f'Positive reviews ({int(len(pos_columns)/2)})'):
+#         pos_columns = data.filter(regex='pos_example').dropna().index
+#         with st.beta_expander(f'Positive reviews ({int(len(pos_columns)/2)})'):
 
-            for idx in range(0, len(pos_columns), 2):
-                components.html(data[pos_columns[idx]],
-                                height=data[pos_columns[idx+1]])
+#             for idx in range(0, len(pos_columns), 2):
+#                 components.html(data[pos_columns[idx]],
+#                                 height=data[pos_columns[idx+1]])
 
-st.markdown("""
-## 
-### Created by [Quantile](https://quantile.nl)
-###
-""")
+# st.markdown("""
+# ##
+# ### Created by [Quantile](https://quantile.nl)
+# ###
+# """)
