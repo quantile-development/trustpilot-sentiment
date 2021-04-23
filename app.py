@@ -54,16 +54,99 @@ def reviews_categorical_plot(df):
 # Title
 st.title('Analysing Trustpilot Reviews')
 
+st.markdown("""
+### Created by [Quantile](https://quantile.nl)
+###
+""")
 
-@st.cache(allow_output_mutation=True, max_entries=10, ttl=600)
-def read_dataframe():
-    return pd.read_pickle('reviews-data.pkl')
 
+review_counts = {'booking.com': {'price': 14,
+                                 'delivery': 0,
+                                 'quality': 4,
+                                 'return': 3,
+                                 'refund': 29,
+                                 'product': 0,
+                                 'service': 34,
+                                 'customer service': 23,
+                                 'order': 1,
+                                 'experience': 16},
+                 'cheaptickets.nl': {'price': 6,
+                                     'delivery': 1,
+                                     'quality': 0,
+                                     'return': 2,
+                                     'refund': 24,
+                                     'product': 0,
+                                     'service': 31,
+                                     'customer service': 12,
+                                     'order': 2,
+                                     'experience': 3},
+                 'bol.com': {'price': 7,
+                             'delivery': 26,
+                             'quality': 3,
+                             'return': 14,
+                             'refund': 4,
+                             'product': 23,
+                             'service': 43,
+                             'customer service': 21,
+                             'order': 35,
+                             'experience': 10},
+                 'coolblue.nl': {'price': 7,
+                                 'delivery': 35,
+                                 'quality': 4,
+                                 'return': 4,
+                                 'refund': 2,
+                                 'product': 19,
+                                 'service': 33,
+                                 'customer service': 9,
+                                 'order': 16,
+                                 'experience': 11},
+                 'wehkamp.nl': {'price': 5,
+                                'delivery': 26,
+                                'quality': 3,
+                                'return': 13,
+                                'refund': 5,
+                                'product': 10,
+                                'service': 43,
+                                'customer service': 27,
+                                'order': 37,
+                                'experience': 13},
+                 'zalando.nl': {'price': 10,
+                                'delivery': 14,
+                                'quality': 5,
+                                'return': 22,
+                                'refund': 12,
+                                'product': 7,
+                                'service': 44,
+                                'customer service': 25,
+                                'order': 49,
+                                'experience': 8},
+                 'mediamarkt.nl': {'price': 8,
+                                   'delivery': 19,
+                                   'quality': 2,
+                                   'return': 19,
+                                   'refund': 16,
+                                   'product': 20,
+                                   'service': 50,
+                                   'customer service': 28,
+                                   'order': 50,
+                                   'experience': 9},
+                 'debijenkorf.nl': {'price': 7,
+                                    'delivery': 13,
+                                    'quality': 4,
+                                    'return': 11,
+                                    'refund': 10,
+                                    'product': 7,
+                                    'service': 34,
+                                    'customer service': 21,
+                                    'order': 31,
+                                    'experience': 9}}
 
-data = read_dataframe()
 
 # List of companies
-companies = data['company'].unique()
+companies = ['booking.com', 'cheaptickets.nl', 'bol.com', 'coolblue.nl', 'wehkamp.nl',
+             'zalando.nl', 'mediamarkt.nl', 'debijenkorf.nl']
+
+print(companies)
 
 selected_company = st.selectbox(
     label='Select company',
@@ -97,17 +180,18 @@ col4 = st.beta_columns(3)
 buttons = []
 
 for idx, aspect in enumerate(aspects):
-    count = data[(data['company'] == selected_company) & (
-        data['aspect'] == aspect)].reset_index(drop=True)['nb_reviews'][0]
-
     if idx < 3:
-        buttons.append(col1[idx].button(f'{aspect} ({count})', key=idx))
+        buttons.append(col1[idx].button(
+            f'{aspect} ({review_counts[selected_company][aspect]})', key=idx))
     elif idx < 6:
-        buttons.append(col2[idx % 3].button(f'{aspect} ({count})', key=idx))
+        buttons.append(col2[idx % 3].button(
+            f'{aspect} ({review_counts[selected_company][aspect]})', key=idx))
     elif idx < 9:
-        buttons.append(col3[idx % 3].button(f'{aspect} ({count})', key=idx))
+        buttons.append(col3[idx % 3].button(
+            f'{aspect} ({review_counts[selected_company][aspect]})', key=idx))
     else:
-        buttons.append(col4[idx % 3].button(f'{aspect} ({count})', key=idx))
+        buttons.append(col4[idx % 3].button(
+            f'{aspect} ({review_counts[selected_company][aspect]})', key=idx))
 
 # Select button pressed last
 selected_aspect = None
@@ -118,20 +202,23 @@ for idx, button in enumerate(buttons):
         break
 
 
-# Filter dataframe
-df = data[(data['company'] == selected_company)
-          & (data['aspect'] == selected_aspect)].reset_index(drop=True)
+@st.cache(allow_output_mutation=True, max_entries=10, ttl=600)
+def read_data(selected_company, selected_aspect):
+    return pd.read_pickle('reviews-data.pkl').loc[selected_company, selected_aspect]
 
 
 if selected_aspect:
+    # Filter dataframe
+    data = read_data(selected_company, selected_aspect)
+
     # If aspect is not present for company
-    if df['nb_reviews'][0] == 0:
+    if data['nb_reviews'] == 0:
         st.warning(
             f'Note: "{selected_aspect}" is not mentioned in any of the available reviews for {selected_company}.')
     else:
 
         sentiment_scores = [float(i)
-                            for i in df['sentiment_scores'][0][1:-1].split(',')]
+                            for i in data['sentiment_scores'][1:-1].split(',')]
 
         scores = reviews_categorical_df(sentiment_scores)
 
@@ -143,7 +230,7 @@ if selected_aspect:
         st.write(f'#### For reviews containing the word: "{selected_aspect}"')
         metric_row(
             {
-                "# Reviews": df['nb_reviews'][0],
+                "# Reviews": data['nb_reviews'],
                 "Negative": np.round(negative, 3),
                 "Neutral": np.round(neutral, 3),
                 "Positive": np.round(positive, 3),
@@ -156,18 +243,18 @@ if selected_aspect:
 
         st.plotly_chart(fig, use_container_width=False, config=config)
 
-        st.header(f'Example reviews')
+        st.header(f'Inspect example reviews')
 
-        neg_columns = df.filter(regex='neg_example').dropna(axis=1).columns
+        neg_columns = data.filter(regex='neg_example').dropna().index
         with st.beta_expander(f'Negative reviews ({int(len(neg_columns)/2)})'):
 
             for idx in range(0, len(neg_columns), 2):
-                components.html(df[neg_columns[idx]][0],
-                                height=df[neg_columns[idx+1]][0])
+                components.html(data[neg_columns[idx]],
+                                height=data[neg_columns[idx+1]])
 
-        pos_columns = df.filter(regex='pos_example').dropna(axis=1).columns
+        pos_columns = data.filter(regex='pos_example').dropna().index
         with st.beta_expander(f'Positive reviews ({int(len(pos_columns)/2)})'):
 
             for idx in range(0, len(pos_columns), 2):
-                components.html(df[pos_columns[idx]][0],
-                                height=df[pos_columns[idx+1]][0])
+                components.html(data[pos_columns[idx]],
+                                height=data[pos_columns[idx+1]])
